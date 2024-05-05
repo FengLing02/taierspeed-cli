@@ -56,4 +56,4 @@ jobs:
       with:
         name: ${PROGNAME}-${GOOS}-${GOARCH}${{ matrix.extension }}
         path: |
-          dist/${PROGNAME}-${GOOS}-${GOARCH}${{ matrix.extension }}
+          dist/*
