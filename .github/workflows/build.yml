@@ -43,7 +43,7 @@ jobs:
         BUILD_DATE: ${{ github.event.workflow_dispatch.inputs.build_date || github.run_id }}
         LDFLAGS: "-w -s -X \"github.com/ztelliot/taierspeed-cli/defs.ProgName=${PROGNAME}\" -X \"github.com/ztelliot/taierspeed-cli/defs.ProgVersion=${PROGVER}\" -X \"github.com/ztelliot/taierspeed-cli/defs.BuildDate=${BUILD_DATE}\""
       run: |
-        BINARY="${PROGNAME}-${GOOS}-${GOARCH}${{ matrix.extension }}"
+        BINARY=${PROGNAME}-${GOOS}-${GOARCH}${{ matrix.extension }}
         OUT_DIR=dist
         mkdir -p "${OUT_DIR}"
         go build -o "${OUT_DIR}/${BINARY}" -ldflags "${LDFLAGS}" -trimpath main.go
