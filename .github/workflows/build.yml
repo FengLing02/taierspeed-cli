@@ -29,7 +29,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: '^1.22' # 使用最新的1.17.x版本
+        go-version: '1.17' # 使用 Go 1.17 版本
 
     - name: Get dependencies
       run: go mod download
@@ -38,9 +38,9 @@ jobs:
       env:
         GOOS: ${{ matrix.goos }}
         GOARCH: ${{ matrix.goarch }}
-        PROGVER: ${{ github.event_name == 'push' && 'git describe --tag' || 'git describe --tag' }} # 根据事件类型设置版本
+        PROGVER: ${{ github.event_name == 'push' && 'git describe --tags' || 'git describe --tags' }} # 根据事件类型设置版本
         PROGNAME: taierspeed-cli
-        BUILD_DATE: $(date -u "+%Y-%m-%d %H:%M:%S %Z")
+        BUILD_DATE: ${{ github.event.workflow_dispatch.inputs.build_date || github.run_id }}
         LDFLAGS: "-w -s -X \"github.com/ztelliot/taierspeed-cli/defs.ProgName=${PROGNAME}\" -X \"github.com/ztelliot/taierspeed-cli/defs.ProgVersion=${PROGVER}\" -X \"github.com/ztelliot/taierspeed-cli/defs.BuildDate=${BUILD_DATE}\""
       run: |
         BINARY="${PROGNAME}-${GOOS}-${GOARCH}${{ matrix.extension }}"
@@ -55,4 +55,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.goos }}-${{ matrix.goarch }}
-        path: ./out/*
+        path: ./out/
