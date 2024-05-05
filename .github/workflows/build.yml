@@ -50,3 +50,10 @@ jobs:
         if [[ "${GOARCH}" != "mips64*" ]] && [[ -x $(command -v upx) ]]; then
           upx -qqq -9 "${OUT_DIR}/${BINARY}"
         fi
+
+    - name: Upload files to Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "${PROGNAME}-${GOOS}-${GOARCH}${{ matrix.extension }}"
+        path: |
+          dist/"${PROGNAME}-${GOOS}-${GOARCH}${{ matrix.extension }}"
