@@ -1,24 +1,57 @@
-name: Build
+name: Automated Build
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        arch: [amd64, arm64]
-    runs-on: ${{ matrix.os }}
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+        include:
+          - goos: windows
+            goarch: amd64
+          - goos: windows
+            goarch: arm64
+            extension: .exe
     steps:
-    - uses: actions/checkout@v2
+    - name: Check out code
+      uses: actions/checkout@v2
+
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: '1.17.7'
-    - name: Build
+        go-version: '^1.17' # 使用最新的1.17.x版本
+
+    - name: Get dependencies
+      run: go mod download
+
+    - name: Build binary
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+        PROGVER: ${{ github.event_name == 'push' && 'git describe --tag' || 'git describe --tag' }} # 根据事件类型设置版本
+        PROGNAME: taierspeed-cli
+        BUILD_DATE: $(date -u "+%Y-%m-%d %H:%M:%S %Z")
+        LDFLAGS: "-w -s -X \"github.com/ztelliot/taierspeed-cli/defs.ProgName=${PROGNAME}\" -X \"github.com/ztelliot/taierspeed-cli/defs.ProgVersion=${PROGVER}\" -X \"github.com/ztelliot/taierspeed-cli/defs.BuildDate=${BUILD_DATE}\""
       run: |
-        GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o myapp-${{ matrix.os }}-${{ matrix.arch }}
-    - uses: actions/upload-artifact@v2
+        BINARY="${PROGNAME}-${GOOS}-${GOARCH}${{ matrix.extension }}"
+        OUT_DIR=./out
+        mkdir -p "${OUT_DIR}"
+        go build -o "${OUT_DIR}/${BINARY}" -ldflags "${LDFLAGS}" -trimpath main.go
+        if [[ "${GOARCH}" != "mips64*" ]] && [[ -x $(command -v upx) ]]; then
+          upx -qqq -9 "${OUT_DIR}/${BINARY}"
+        fi
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
       with:
-        name: myapp-${{ matrix.os }}-${{ matrix.arch }}
-        path: myapp-${{ matrix.os }}-${{ matrix.arch }}
+        name: ${{ matrix.goos }}-${{ matrix.goarch }}
+        path: ./out/*
