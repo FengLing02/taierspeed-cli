@@ -44,15 +44,9 @@ jobs:
         LDFLAGS: "-w -s -X \"github.com/ztelliot/taierspeed-cli/defs.ProgName=${PROGNAME}\" -X \"github.com/ztelliot/taierspeed-cli/defs.ProgVersion=${PROGVER}\" -X \"github.com/ztelliot/taierspeed-cli/defs.BuildDate=${BUILD_DATE}\""
       run: |
         BINARY="${PROGNAME}-${GOOS}-${GOARCH}${{ matrix.extension }}"
-        OUT_DIR=./out
+        OUT_DIR=dist
         mkdir -p "${OUT_DIR}"
         go build -o "${OUT_DIR}/${BINARY}" -ldflags "${LDFLAGS}" -trimpath main.go
         if [[ "${GOARCH}" != "mips64*" ]] && [[ -x $(command -v upx) ]]; then
           upx -qqq -9 "${OUT_DIR}/${BINARY}"
         fi
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: ${{ matrix.goos }}-${{ matrix.goarch }}
-        path: ./out/
